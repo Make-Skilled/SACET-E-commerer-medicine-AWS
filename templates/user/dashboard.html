@@ -14,7 +14,6 @@
             <div class="flex justify-between items-center">
                 <div class="text-2xl font-bold">MediMart</div>
                 <div class="hidden md:flex space-x-6">
-                    <a href="/" class="hover:text-blue-200">Home</a>
                     <a href="/products" class="hover:text-blue-200">Products</a>
                     <a href="/cart" class="hover:text-blue-200">Cart</a>
                     <a href="/user/orders" class="hover:text-blue-200">Orders</a>
@@ -37,138 +36,97 @@
             {% endif %}
         {% endwith %}
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- User Profile Section -->
+        <div class="grid grid-cols-1 gap-6">
+            <!-- User Info Section -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-bold mb-6">My Profile</h2>
-                <div class="space-y-4">
-                    <p><span class="font-semibold">Name:</span> {{ session.user.name }}</p>
-                    <p><span class="font-semibold">Email:</span> {{ session.user.email }}</p>
+                <h2 class="text-2xl font-bold mb-4">Welcome, {{ session.user.name }}!</h2>
+                <p class="text-gray-600">Email: {{ session.user.email }}</p>
+                <div class="mt-4 flex space-x-4">
+                    <!-- Removed prescription history link -->
                 </div>
             </div>
 
             <!-- Prescription Upload Section -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-bold mb-6">Upload Prescription</h2>
-                <form id="prescriptionForm" class="space-y-4">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" id="dropZone">
-                        <input type="file" id="prescriptionFile" accept="image/*" class="hidden" />
-                        <div class="space-y-2">
-                            <i class="fas fa-file-medical text-4xl text-gray-400"></i>
-                            <p class="text-gray-600">Drag and drop your prescription here or</p>
-                            <button type="button" onclick="document.getElementById('prescriptionFile').click()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                Browse Files
-                            </button>
-                        </div>
-                    </div>
-                    <div id="filePreview" class="hidden">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-4">
-                                <i class="fas fa-file-image text-blue-600"></i>
-                                <span id="fileName" class="text-gray-700"></span>
+                <h2 class="text-2xl font-bold mb-4">Upload Prescription</h2>
+                <div class="space-y-4">
+                    <form id="prescriptionForm" class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <input type="file" 
+                                id="prescriptionFile" 
+                                name="prescription" 
+                                accept="image/*"
+                                class="hidden" 
+                                onchange="handleFileSelect(this)">
+                            <label for="prescriptionFile" class="cursor-pointer">
+                                <div class="space-y-2">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                                    <p class="text-gray-600">Click to upload prescription image</p>
+                                    <p class="text-sm text-gray-500">(Supported formats: PNG, JPG, JPEG)</p>
+                                </div>
+                            </label>
+                            <div id="filePreview" class="hidden mt-4">
+                                <img id="imagePreview" class="max-h-48 mx-auto" alt="Preview">
+                                <p id="fileName" class="mt-2 text-sm text-gray-600"></p>
                             </div>
-                            <button type="button" onclick="clearFile()" class="text-red-600 hover:text-red-800">
-                                <i class="fas fa-times"></i>
-                            </button>
                         </div>
-                    </div>
-                    <button type="submit" class="w-full bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled id="uploadButton">
-                        Upload and Analyze
-                    </button>
-                </form>
+                        <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            id="uploadButton">
+                            Upload and Analyze
+                        </button>
+                    </form>
 
-                <!-- Loading Indicator -->
-                <div id="loadingIndicator" class="hidden mt-4">
-                    <div class="flex items-center justify-center space-x-2">
-                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span class="text-gray-600">Analyzing prescription...</span>
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="hidden text-center py-4">
+                        <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+                        <p class="mt-2 text-gray-600">Analyzing prescription...</p>
                     </div>
-                </div>
 
-                <!-- Results Section -->
-                <div id="analysisResults" class="hidden mt-6">
-                    <h3 class="text-lg font-semibold mb-3">Prescription Analysis</h3>
-                    <div id="extractedText" class="bg-gray-50 p-4 rounded-lg text-gray-700 whitespace-pre-line"></div>
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="hidden">
+                        <h3 class="text-xl font-semibold mb-2">Extracted Text</h3>
+                        <div id="extractedText" class="bg-gray-50 p-4 rounded-lg text-gray-700 whitespace-pre-line"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('prescriptionFile');
-        const filePreview = document.getElementById('filePreview');
-        const fileName = document.getElementById('fileName');
-        const uploadButton = document.getElementById('uploadButton');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const analysisResults = document.getElementById('analysisResults');
-        const extractedText = document.getElementById('extractedText');
-
-        // Drag and drop handlers
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            dropZone.classList.add('border-blue-500', 'bg-blue-50');
-        }
-
-        function unhighlight(e) {
-            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-        }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
-            handleFile(file);
-        }
-
-        fileInput.addEventListener('change', function(e) {
-            handleFile(e.target.files[0]);
-        });
-
-        function handleFile(file) {
-            if (file && file.type.startsWith('image/')) {
-                fileName.textContent = file.name;
-                filePreview.classList.remove('hidden');
-                uploadButton.disabled = false;
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                // Show file preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('filePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                
+                // Enable upload button
+                document.getElementById('uploadButton').disabled = false;
             }
-        }
-
-        function clearFile() {
-            fileInput.value = '';
-            filePreview.classList.add('hidden');
-            uploadButton.disabled = true;
-            analysisResults.classList.add('hidden');
         }
 
         document.getElementById('prescriptionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const file = fileInput.files[0];
-            if (!file) return;
+            const fileInput = document.getElementById('prescriptionFile');
+            if (!fileInput.files.length) {
+                showNotification('Please select a file first', 'error');
+                return;
+            }
 
             const formData = new FormData();
-            formData.append('prescription', file);
+            formData.append('prescription', fileInput.files[0]);
 
-            uploadButton.disabled = true;
-            loadingIndicator.classList.remove('hidden');
-            analysisResults.classList.add('hidden');
+            // Show loading indicator
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('uploadButton').disabled = true;
+            document.getElementById('resultsSection').classList.add('hidden');
 
             try {
                 const response = await fetch('/api/analyze-prescription', {
@@ -177,21 +135,47 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    extractedText.textContent = data.text;
-                    analysisResults.classList.remove('hidden');
+                    showNotification('Prescription analyzed successfully!', 'success');
+                    document.getElementById('extractedText').textContent = data.text;
+                    document.getElementById('resultsSection').classList.remove('hidden');
                 } else {
-                    throw new Error(data.message || 'Failed to analyze prescription');
+                    showNotification(data.message || 'Error analyzing prescription', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error analyzing prescription: ' + error.message);
+                showNotification('Error analyzing prescription', 'error');
             } finally {
-                uploadButton.disabled = false;
-                loadingIndicator.classList.add('hidden');
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('uploadButton').disabled = false;
             }
         });
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } transform transition-transform duration-300 ease-in-out translate-y-0`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">
+                        ${type === 'success' 
+                            ? '<i class="fas fa-check-circle"></i>' 
+                            : '<i class="fas fa-exclamation-circle"></i>'}
+                    </span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateY(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html> 

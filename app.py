@@ -11,6 +11,7 @@ import functools
 import boto3
 from botocore.exceptions import ClientError
 import uuid
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -28,10 +29,99 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Initialize AWS clients at startup
+s3_client = boto3.client('s3',
+    aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
+    region_name=Config.AWS_REGION
+)
+
+textract_client = boto3.client('textract',
+    aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
+    region_name=Config.AWS_REGION
+)
+
 db = DynamoDB()
 
 # Create tables on startup
 db.create_tables()
+
+# Check S3 bucket exists and configure permissions
+try:
+    s3_client.head_bucket(Bucket=Config.S3_BUCKET_NAME)
+    print(f"Successfully connected to S3 bucket: {Config.S3_BUCKET_NAME}")
+    
+    # Set bucket policy to allow Textract access
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "AllowTextractAccess",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "textract.amazonaws.com"
+                },
+                "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket"
+                ],
+                "Resource": [
+                    f"arn:aws:s3:::{Config.S3_BUCKET_NAME}",
+                    f"arn:aws:s3:::{Config.S3_BUCKET_NAME}/*"
+                ]
+            }
+        ]
+    }
+    
+    try:
+        s3_client.put_bucket_policy(
+            Bucket=Config.S3_BUCKET_NAME,
+            Policy=json.dumps(bucket_policy)
+        )
+        print("Successfully updated bucket policy for Textract access")
+    except Exception as policy_error:
+        print(f"Error setting bucket policy: {str(policy_error)}")
+        
+except Exception as e:
+    print(f"Error connecting to S3 bucket: {str(e)}")
+    # Create bucket if it doesn't exist
+    try:
+        s3_client.create_bucket(
+            Bucket=Config.S3_BUCKET_NAME,
+            CreateBucketConfiguration={'LocationConstraint': Config.AWS_REGION}
+        )
+        print(f"Created S3 bucket: {Config.S3_BUCKET_NAME}")
+        
+        # Set bucket policy for new bucket
+        bucket_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "AllowTextractAccess",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": "textract.amazonaws.com"
+                    },
+                    "Action": [
+                        "s3:GetObject",
+                        "s3:ListBucket"
+                    ],
+                    "Resource": [
+                        f"arn:aws:s3:::{Config.S3_BUCKET_NAME}",
+                        f"arn:aws:s3:::{Config.S3_BUCKET_NAME}/*"
+                    ]
+                }
+            ]
+        }
+        
+        s3_client.put_bucket_policy(
+            Bucket=Config.S3_BUCKET_NAME,
+            Policy=json.dumps(bucket_policy)
+        )
+        print("Successfully set bucket policy for Textract access")
+    except Exception as create_error:
+        print(f"Error creating S3 bucket: {str(create_error)}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -855,43 +945,22 @@ def analyze_prescription():
         if not file or not allowed_file(file.filename):
             return {'success': False, 'message': 'Invalid file type'}, 400
 
-        # Initialize S3 and Textract clients
-        s3_client = boto3.client('s3',
-            aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
-            region_name=Config.AWS_REGION
-        )
-        
-        textract_client = boto3.client('textract',
-            aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
-            region_name=Config.AWS_REGION
-        )
-
         # Generate unique filename
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        unique_id = str(uuid.uuid4())[:8]
         filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4()}_{filename}"
-        
-        # Upload to S3
-        try:
-            s3_client.upload_fileobj(
-                file,
-                Config.S3_BUCKET_NAME,
-                f"prescriptions/{unique_filename}",
-                ExtraArgs={'ContentType': file.content_type}
-            )
-        except ClientError as e:
-            print("Error uploading to S3:", str(e))
-            return {'success': False, 'message': 'Error uploading file'}, 500
+        unique_filename = f"{timestamp}_{unique_id}_{filename}"
+        s3_key = f"prescriptions/{unique_filename}"
 
-        # Get the uploaded file from S3 for Textract analysis
         try:
+            # Read the file into bytes for Textract
+            file_bytes = file.read()
+            
+            # Analyze with Textract directly
+            print("Starting Textract analysis...")
             response = textract_client.detect_document_text(
                 Document={
-                    'S3Object': {
-                        'Bucket': Config.S3_BUCKET_NAME,
-                        'Name': f"prescriptions/{unique_filename}"
-                    }
+                    'Bytes': file_bytes
                 }
             )
             
@@ -901,6 +970,21 @@ def analyze_prescription():
                 if item['BlockType'] == 'LINE':
                     extracted_text += item['Text'] + "\n"
 
+            print("Successfully extracted text from image")
+
+            # Reset file pointer for S3 upload
+            file.seek(0)
+            
+            # Upload to S3
+            print(f"Uploading file to S3: {s3_key}")
+            s3_client.upload_fileobj(
+                file,
+                Config.S3_BUCKET_NAME,
+                s3_key,
+                ExtraArgs={'ContentType': file.content_type}
+            )
+            print(f"File uploaded successfully to S3: {s3_key}")
+
             # Save prescription record in DynamoDB
             prescription = {
                 'id': str(uuid.uuid4()),
@@ -908,7 +992,7 @@ def analyze_prescription():
                 'filename': unique_filename,
                 'uploaded_at': datetime.utcnow().isoformat(),
                 'extracted_text': extracted_text,
-                's3_path': f"prescriptions/{unique_filename}"
+                's3_path': s3_key
             }
             
             db.put_item(Config.PRESCRIPTIONS_TABLE, prescription)
@@ -919,12 +1003,12 @@ def analyze_prescription():
                 'message': 'Prescription analyzed successfully'
             }
 
-        except ClientError as e:
-            print("Error analyzing with Textract:", str(e))
-            return {'success': False, 'message': 'Error analyzing prescription'}, 500
+        except Exception as e:
+            print(f"Error processing prescription: {str(e)}")
+            return {'success': False, 'message': 'Error processing prescription'}, 500
 
     except Exception as e:
-        print("Error in analyze_prescription:", str(e))
+        print(f"Error in analyze_prescription: {str(e)}")
         return {'success': False, 'message': str(e)}, 500
 
 @app.route('/api/user/update-payment/<order_id>', methods=['POST'])
