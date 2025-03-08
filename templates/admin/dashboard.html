@@ -7,14 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <!-- Navigation -->
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
                 <div class="text-2xl font-bold">MediMart Admin</div>
                 <div class="hidden md:flex space-x-6">
-                    <a href="/admin" class="hover:text-blue-200">Dashboard</a>
                     <a href="/admin/add-medicine" class="hover:text-blue-200">Add Medicine</a>
                     <a href="/admin/view-products" class="hover:text-blue-200">View Products</a>
                     <a href="/admin/orders" class="hover:text-blue-200">Orders</a>
@@ -24,100 +23,63 @@
         </div>
     </nav>
 
-    <!-- Dashboard Content -->
+    <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold mb-6">Dashboard Overview</h1>
-        
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-500">
-                        <i class="fas fa-pills text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-500">Total Products</p>
-                        <p class="text-2xl font-semibold">245</p>
-                    </div>
-                </div>
+        <!-- Welcome Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to MediMart</h1>
+            <p class="text-xl text-gray-600">Your Trusted Online Pharmacy</p>
+        </div>
+
+        <!-- Features Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-pills text-4xl text-blue-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Wide Range of Medicines</h3>
+                <p class="text-gray-600">Access to a comprehensive selection of pharmaceutical products</p>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-500">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-500">Total Orders</p>
-                        <p class="text-2xl font-semibold">54</p>
-                    </div>
-                </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-truck text-4xl text-blue-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+                <p class="text-gray-600">Quick and reliable delivery to your doorstep</p>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
-                        <i class="fas fa-users text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-500">Customers</p>
-                        <p class="text-2xl font-semibold">156</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-100 text-purple-500">
-                        <i class="fas fa-money-bill-wave text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-500">Revenue</p>
-                        <p class="text-2xl font-semibold">₹45,678</p>
-                    </div>
-                </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-user-md text-4xl text-blue-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Expert Support</h3>
+                <p class="text-gray-600">Professional guidance and support available</p>
             </div>
         </div>
 
-        <!-- Recent Orders -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-4">Recent Orders</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead>
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">#ORD001</td>
-                            <td class="px-6 py-4 whitespace-nowrap">John Doe</td>
-                            <td class="px-6 py-4 whitespace-nowrap">Paracetamol, Vitamin C</td>
-                            <td class="px-6 py-4 whitespace-nowrap">₹450</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Delivered
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">#ORD002</td>
-                            <td class="px-6 py-4 whitespace-nowrap">Jane Smith</td>
-                            <td class="px-6 py-4 whitespace-nowrap">Antibiotics</td>
-                            <td class="px-6 py-4 whitespace-nowrap">₹850</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    Processing
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- About Section -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-4 text-center">About MediMart</h2>
+            <p class="text-gray-600 text-center max-w-3xl mx-auto">
+                MediMart is your trusted online pharmacy, committed to providing high-quality healthcare products and services. 
+                We ensure authentic medicines, timely delivery, and professional healthcare support to meet all your medical needs.
+            </p>
+        </div>
+
+        <!-- Services Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-certificate text-3xl text-blue-600 mb-3"></i>
+                <h4 class="text-lg font-semibold mb-2">Genuine Products</h4>
+                <p class="text-gray-600">100% authentic medicines</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-shield-alt text-3xl text-blue-600 mb-3"></i>
+                <h4 class="text-lg font-semibold mb-2">Secure Payments</h4>
+                <p class="text-gray-600">Safe and encrypted transactions</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-headset text-3xl text-blue-600 mb-3"></i>
+                <h4 class="text-lg font-semibold mb-2">24/7 Support</h4>
+                <p class="text-gray-600">Round-the-clock assistance</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <i class="fas fa-percent text-3xl text-blue-600 mb-3"></i>
+                <h4 class="text-lg font-semibold mb-2">Best Prices</h4>
+                <p class="text-gray-600">Competitive pricing guaranteed</p>
             </div>
         </div>
     </div>
