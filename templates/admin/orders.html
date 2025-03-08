@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - MediMart Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart Admin</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/admin" class="hover:text-blue-200">Dashboard</a>
+                    <a href="/admin/view-products" class="hover:text-blue-200">Products</a>
+                    <a href="/admin/add-medicine" class="hover:text-blue-200">Add Medicine</a>
+                    <a href="/admin/orders" class="hover:text-blue-200">Orders</a>
+                    <a href="/logout" class="hover:text-blue-200">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="container mx-auto px-4 mt-4">
+                    <div class="p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Order Management</h1>
+        
+        <!-- Orders List Container -->
+        <div id="ordersContainer" class="space-y-6">
+            <!-- Orders will be dynamically inserted here -->
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden">
+            <div class="flex justify-center items-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4" role="alert">
+            <span class="block sm:inline"></span>
+        </div>
+    </div>
+
+    <!-- Order Template -->
+    <template id="orderTemplate">
+        <div class="order-item bg-white shadow-lg rounded-lg p-6 mb-4">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold">Order #<span class="order-id"></span></h3>
+                    <p class="text-gray-600">Customer: <span class="customer-email"></span></p>
+                    <p class="text-gray-600">Date: <span class="order-date"></span></p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xl font-bold text-blue-600">₹<span class="order-total"></span></p>
+                    <div class="flex items-center justify-end mt-2 space-x-2">
+                        <select class="order-status px-3 py-1 border rounded-md" ${order.status === 'cancelled' || order.status === 'delivered' ? 'disabled' : ''}>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <span class="payment-status-badge px-3 py-1 rounded-md font-medium"></span>
+                        <button class="update-status-btn bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed" ${order.status === 'cancelled' ? 'disabled' : ''}>
+                            Update
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <h4 class="font-semibold mb-2">Order Items:</h4>
+                <div class="order-items grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Items will be inserted here -->
+                </div>
+            </div>
+
+            <div class="border-t mt-4 pt-4">
+                <h4 class="font-semibold mb-2">Shipping Address:</h4>
+                <div class="shipping-address text-gray-600">
+                    <!-- Shipping address will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+    function formatDate(dateString) {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    function updateOrderStatus(orderId, newStatus, button) {
+        // Disable the button and show loading state
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Updating...
+        `;
+
+        fetch(`/api/update-order-status/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Order status updated successfully', 'success');
+            } else {
+                showNotification(data.message || 'Error updating order status', 'error');
+                // Reset the select to its previous value
+                const orderItem = button.closest('.order-item');
+                const select = orderItem.querySelector('.order-status');
+                select.value = select.dataset.previousValue;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error updating order status', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            button.disabled = false;
+            button.textContent = originalText;
+        });
+    }
+
+    function showNotification(message, type) {
+        // Remove any existing notifications
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Create new notification
+        const notification = document.createElement('div');
+        notification.className = `notification-toast fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } transform transition-transform duration-300 ease-in-out translate-y-0`;
+        
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <span class="mr-2">
+                    ${type === 'success' 
+                        ? '<i class="fas fa-check-circle"></i>' 
+                        : '<i class="fas fa-exclamation-circle"></i>'}
+                </span>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+
+        // Animate out after delay
+        setTimeout(() => {
+            notification.style.transform = 'translateY(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function createOrderElement(order) {
+        const template = document.getElementById('orderTemplate');
+        const orderElement = template.content.cloneNode(true);
+        const orderItem = orderElement.querySelector('.order-item');
+
+        // Set order details
+        orderItem.querySelector('.order-id').textContent = order.id;
+        orderItem.querySelector('.customer-email').textContent = order.user_email;
+        orderItem.querySelector('.order-date').textContent = formatDate(order.created_at);
+        orderItem.querySelector('.order-total').textContent = order.total_amount.toFixed(2);
+
+        // Set order status and payment status
+        const statusSelect = orderItem.querySelector('.order-status');
+        const paymentStatusBadge = orderItem.querySelector('.payment-status-badge');
+        const updateButton = orderItem.querySelector('.update-status-btn');
+        
+        statusSelect.value = order.status;
+        statusSelect.dataset.previousValue = order.status;
+
+        // Set payment status badge
+        const paymentStatus = order.payment_status || 'pending';
+        paymentStatusBadge.textContent = `Payment: ${paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}`;
+        paymentStatusBadge.className = `payment-status-badge px-3 py-1 rounded-md font-medium ${
+            paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+            paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+            'bg-yellow-100 text-yellow-800'
+        }`;
+
+        // Disable controls if order is cancelled
+        if (order.status === 'cancelled') {
+            statusSelect.disabled = true;
+            updateButton.disabled = true;
+            updateButton.title = 'Cannot update cancelled orders';
+        }
+
+        // Add update button handler
+        updateButton.addEventListener('click', () => {
+            const newStatus = statusSelect.value;
+            
+            if (newStatus !== statusSelect.dataset.previousValue) {
+                updateButton.disabled = true;
+                const originalText = updateButton.textContent;
+                updateButton.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                `;
+
+                fetch(`/api/update-order-status/${order.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Order status updated successfully', 'success');
+                        statusSelect.dataset.previousValue = newStatus;
+                    } else {
+                        showNotification('Error updating order', 'error');
+                        statusSelect.value = statusSelect.dataset.previousValue;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error updating order', 'error');
+                    statusSelect.value = statusSelect.dataset.previousValue;
+                })
+                .finally(() => {
+                    updateButton.disabled = false;
+                    updateButton.textContent = originalText;
+                });
+            }
+        });
+
+        // Store previous value when status changes
+        statusSelect.addEventListener('change', (e) => {
+            updateButton.disabled = e.target.value === e.target.dataset.previousValue;
+        });
+
+        // Add order items
+        const itemsContainer = orderItem.querySelector('.order-items');
+        order.items.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'bg-gray-50 p-3 rounded';
+            itemElement.innerHTML = `
+                <p class="font-semibold">${item.name}</p>
+                <p class="text-gray-600">Quantity: ${item.quantity}</p>
+                <p class="text-gray-600">Price: ₹${item.price.toFixed(2)}</p>
+                <p class="text-gray-600">Total: ₹${item.total.toFixed(2)}</p>
+            `;
+            itemsContainer.appendChild(itemElement);
+        });
+
+        // Add shipping address
+        const addressContainer = orderItem.querySelector('.shipping-address');
+        const address = order.shipping_address;
+        addressContainer.innerHTML = `
+            <p>${address.street}</p>
+            ${address.landmark ? `<p>${address.landmark}</p>` : ''}
+            <p>${address.city}, ${address.state}</p>
+            <p>PIN: ${address.pincode}</p>
+        `;
+
+        return orderItem;
+    }
+
+    function fetchAndDisplayOrders() {
+        const container = document.getElementById('ordersContainer');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Show loading indicator
+        loadingIndicator.classList.remove('hidden');
+        container.innerHTML = '';
+        errorMessage.classList.add('hidden');
+
+        fetch('/api/admin/orders')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.orders.length === 0) {
+                        container.innerHTML = '<p class="text-center text-gray-500 py-8">No orders found</p>';
+                    } else {
+                        data.orders.forEach(order => {
+                            container.appendChild(createOrderElement(order));
+                        });
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to fetch orders');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.querySelector('span').textContent = error.message || 'Error loading orders';
+                errorMessage.classList.remove('hidden');
+            })
+            .finally(() => {
+                loadingIndicator.classList.add('hidden');
+            });
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', fetchAndDisplayOrders);
+
+    // Refresh orders every 5 minutes
+    setInterval(fetchAndDisplayOrders, 300000);
+    </script>
+</body>
+</html> 

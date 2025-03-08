@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediMart - Your Online Medicine Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-blue-200">Home</a>
+                    <a href="/login" class="hover:text-blue-200">Login</a>
+                </div>
+                <div class="md:hidden">
+                    <button class="text-white focus:outline-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-blue-500 text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">Welcome to MediMart</h1>
+            <p class="text-xl mb-8">Your trusted online pharmacy for all medical needs</p>
+            <a href="/products" class="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 transition duration-300">
+                Shop Now
+            </a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container mx-auto px-4 py-16">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <i class="fas fa-shipping-fast text-4xl text-blue-500 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+                <p class="text-gray-600">Get your medicines delivered at your doorstep within 24 hours</p>
+            </div>
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <i class="fas fa-certificate text-4xl text-blue-500 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Genuine Products</h3>
+                <p class="text-gray-600">100% authentic medicines from licensed pharmacies</p>
+            </div>
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <i class="fas fa-headset text-4xl text-blue-500 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">24/7 Support</h3>
+                <p class="text-gray-600">Round the clock customer support for all your queries</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <div class="bg-gray-100 py-16">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-6">Why Choose MediMart?</h2>
+                <p class="text-gray-600 mb-8">
+                    MediMart is your one-stop destination for all healthcare needs. We offer a wide range of medicines, 
+                    healthcare products, and medical equipment at competitive prices. Our platform ensures a seamless 
+                    shopping experience with quick delivery and excellent customer service.
+                </p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h4 class="font-semibold mb-2">Wide Selection</h4>
+                        <p class="text-gray-600">Over 50,000+ products from trusted brands</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h4 class="font-semibold mb-2">Secure Payments</h4>
+                        <p class="text-gray-600">Multiple payment options with secure checkout</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">MediMart</h4>
+                    <p class="text-gray-400">Your trusted healthcare partner</p>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="/products" class="text-gray-400 hover:text-white">Products</a></li>
+                        <li><a href="/cart" class="text-gray-400 hover:text-white">Cart</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">Contact Us</h4>
+                    <p class="text-gray-400">Email: support@medimart.com</p>
+                    <p class="text-gray-400">Phone: 1-800-MEDIMART</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+                <p class="text-gray-400">&copy; 2024 MediMart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - MediMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-blue-200">Home</a>
+                    <a href="/products" class="hover:text-blue-200">Products</a>
+                    {% if session.get('user') %}
+                        <a href="/cart" class="hover:text-blue-200">Cart</a>
+                        <a href="/user/dashboard" class="hover:text-blue-200">Dashboard</a>
+                        <a href="/logout" class="hover:text-blue-200">Logout</a>
+                    {% else %}
+                        <a href="/login" class="hover:text-blue-200">Login</a>
+                        <a href="/register" class="hover:text-blue-200">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <form method="GET" action="{{ url_for('products') }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
+                        <input type="text" name="search" id="search" value="{{ current_search }}"
+                               placeholder="Search medicines..."
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" id="category"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category }}" {% if category == current_category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Price Range</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="min_price" placeholder="Min" value="{{ current_min_price }}"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="number" name="max_price" placeholder="Max" value="{{ current_max_price }}"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Sort -->
+                    <div>
+                        <label for="sort" class="block text-sm font-medium text-gray-700">Sort By</label>
+                        <select name="sort" id="sort"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                            <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filter Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Product Image -->
+                <div class="relative h-48">
+                    <img src="{{ url_for('static', filename=product.image_path.replace('\\', '/')) }}" 
+                         alt="{{ product.name }}"
+                         class="w-full h-full object-cover"
+                         onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                </div>
+
+                <!-- Product Details -->
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ product.name }}</h3>
+                    <p class="text-sm text-gray-600">{{ product.generic_name }}</p>
+                    
+                    <div class="mt-2 flex items-center justify-between">
+                        <span class="text-blue-600 font-bold">₹{{ product.price }}</span>
+                        <span class="px-2 py-1 text-xs rounded-full {% if product.stock|int > 10 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            Stock: {{ product.stock }}
+                        </span>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                            {{ product.category }}
+                        </span>
+                    </div>
+
+                    <p class="mt-2 text-sm text-gray-500 line-clamp-2">{{ product.description }}</p>
+
+                    {% if session.get('user') %}
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <label for="quantity-{{ product.id }}" class="text-sm text-gray-600">Quantity:</label>
+                            <input type="number" id="quantity-{{ product.id }}" 
+                                   class="w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                   value="1" min="1" max="{{ product.stock }}">
+                        </div>
+                        <button onclick="addToCart('{{ product.id }}')" 
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                                {% if product.stock|int == 0 %}disabled{% endif %}>
+                            {% if product.stock|int == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                        </button>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login_page') }}" 
+                       class="mt-4 block text-center w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                        Login to Buy
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-8">
+                <p class="text-gray-500">No products found matching your criteria.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        async function addToCart(productId) {
+            try {
+                const quantityInput = document.getElementById(`quantity-${productId}`);
+                const quantity = parseInt(quantityInput.value);
+                
+                if (isNaN(quantity) || quantity <= 0) {
+                    showNotification('Please enter a valid quantity', 'error');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('quantity', quantity);
+
+                const response = await fetch(`/api/add-to-cart/${productId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification(result.message, 'success');
+                    // Update cart count in UI if needed
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showNotification('Failed to add item to cart', 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg ${
+                type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`;
+            notification.textContent = message;
+            
+            // Add to document
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - MediMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-blue-200">Home</a>
+                    <a href="/products" class="hover:text-blue-200">Products</a>
+                    <a href="/cart" class="hover:text-blue-200">Cart</a>
+                    <a href="/user/orders" class="hover:text-blue-200">Orders</a>
+                    <a href="/logout" class="hover:text-blue-200">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- User Profile Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6">My Profile</h2>
+                <div class="space-y-4">
+                    <p><span class="font-semibold">Name:</span> {{ session.user.name }}</p>
+                    <p><span class="font-semibold">Email:</span> {{ session.user.email }}</p>
+                </div>
+            </div>
+
+            <!-- Prescription Upload Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6">Upload Prescription</h2>
+                <form id="prescriptionForm" class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" id="dropZone">
+                        <input type="file" id="prescriptionFile" accept="image/*" class="hidden" />
+                        <div class="space-y-2">
+                            <i class="fas fa-file-medical text-4xl text-gray-400"></i>
+                            <p class="text-gray-600">Drag and drop your prescription here or</p>
+                            <button type="button" onclick="document.getElementById('prescriptionFile').click()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                Browse Files
+                            </button>
+                        </div>
+                    </div>
+                    <div id="filePreview" class="hidden">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <i class="fas fa-file-image text-blue-600"></i>
+                                <span id="fileName" class="text-gray-700"></span>
+                            </div>
+                            <button type="button" onclick="clearFile()" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled id="uploadButton">
+                        Upload and Analyze
+                    </button>
+                </form>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="hidden mt-4">
+                    <div class="flex items-center justify-center space-x-2">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span class="text-gray-600">Analyzing prescription...</span>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="analysisResults" class="hidden mt-6">
+                    <h3 class="text-lg font-semibold mb-3">Prescription Analysis</h3>
+                    <div id="extractedText" class="bg-gray-50 p-4 rounded-lg text-gray-700 whitespace-pre-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('prescriptionFile');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const uploadButton = document.getElementById('uploadButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const analysisResults = document.getElementById('analysisResults');
+        const extractedText = document.getElementById('extractedText');
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            handleFile(file);
+        }
+
+        fileInput.addEventListener('change', function(e) {
+            handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                fileName.textContent = file.name;
+                filePreview.classList.remove('hidden');
+                uploadButton.disabled = false;
+            }
+        }
+
+        function clearFile() {
+            fileInput.value = '';
+            filePreview.classList.add('hidden');
+            uploadButton.disabled = true;
+            analysisResults.classList.add('hidden');
+        }
+
+        document.getElementById('prescriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('prescription', file);
+
+            uploadButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            analysisResults.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/analyze-prescription', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    extractedText.textContent = data.text;
+                    analysisResults.classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'Failed to analyze prescription');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing prescription: ' + error.message);
+            } finally {
+                uploadButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 

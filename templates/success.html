@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - MediMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-blue-200">Home</a>
+                    <a href="/products" class="hover:text-blue-200">Products</a>
+                    {% if session.get('user') %}
+                        <a href="/cart" class="hover:text-blue-200">Cart</a>
+                        <a href="/user/dashboard" class="hover:text-blue-200">Dashboard</a>
+                        <a href="/logout" class="hover:text-blue-200">Logout</a>
+                    {% else %}
+                        <a href="/login" class="hover:text-blue-200">Login</a>
+                        <a href="/register" class="hover:text-blue-200">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-16">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="mb-6">
+                <i class="fas fa-check-circle text-6xl text-green-500"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h1>
+            <p class="text-gray-600 mb-8">Thank you for your payment. Your order has been confirmed.</p>
+            <div class="space-y-4">
+                <a href="/user/orders" class="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                    View Orders
+                </a>
+                <a href="/products" class="block w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition duration-200">
+                    Continue Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

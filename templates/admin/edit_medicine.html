@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Medicine - MediMart Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">MediMart Admin</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/admin" class="hover:text-blue-200">Dashboard</a>
+                    <a href="/admin/add-medicine" class="hover:text-blue-200">Add Medicine</a>
+                    <a href="/admin/view-products" class="hover:text-blue-200">View Products</a>
+                    <a href="/admin/orders" class="hover:text-blue-200">Orders</a>
+                    <a href="/logout" class="hover:text-blue-200">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">Edit Medicine</h2>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Current Image Preview -->
+            <div class="mb-6">
+                <p class="text-sm text-gray-600 mb-2">Current Image:</p>
+                <img src="{{ url_for('static', filename=product.image_path.replace('\\', '/')) }}" 
+                     alt="{{ product.name }}" 
+                     class="h-32 w-32 object-cover rounded"
+                     onerror="this.src='https://via.placeholder.com/150'">
+            </div>
+
+            <form action="{{ url_for('edit_medicine', product_id=product.id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Medicine Name</label>
+                        <input type="text" name="name" id="name" value="{{ product.name }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Generic Name -->
+                    <div>
+                        <label for="generic_name" class="block text-sm font-medium text-gray-700">Generic Name</label>
+                        <input type="text" name="generic_name" id="generic_name" value="{{ product.generic_name }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" id="category" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Tablets" {% if product.category == 'Tablets' %}selected{% endif %}>Tablets</option>
+                            <option value="Capsules" {% if product.category == 'Capsules' %}selected{% endif %}>Capsules</option>
+                            <option value="Syrups" {% if product.category == 'Syrups' %}selected{% endif %}>Syrups</option>
+                            <option value="Injections" {% if product.category == 'Injections' %}selected{% endif %}>Injections</option>
+                            <option value="Topical" {% if product.category == 'Topical' %}selected{% endif %}>Topical</option>
+                        </select>
+                    </div>
+
+                    <!-- Manufacturer -->
+                    <div>
+                        <label for="manufacturer" class="block text-sm font-medium text-gray-700">Manufacturer</label>
+                        <input type="text" name="manufacturer" id="manufacturer" value="{{ product.manufacturer }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Price -->
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700">Price (₹)</label>
+                        <input type="number" name="price" id="price" value="{{ product.price }}" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Stock -->
+                    <div>
+                        <label for="stock" class="block text-sm font-medium text-gray-700">Stock</label>
+                        <input type="number" name="stock" id="stock" value="{{ product.stock }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Expiry Date -->
+                    <div>
+                        <label for="expiry_date" class="block text-sm font-medium text-gray-700">Expiry Date</label>
+                        <input type="date" name="expiry_date" id="expiry_date" value="{{ product.expiry_date }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Batch Number -->
+                    <div>
+                        <label for="batch_number" class="block text-sm font-medium text-gray-700">Batch Number</label>
+                        <input type="text" name="batch_number" id="batch_number" value="{{ product.batch_number }}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- New Image -->
+                    <div>
+                        <label for="image" class="block text-sm font-medium text-gray-700">New Image (optional)</label>
+                        <input type="file" name="image" id="image" accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" id="description" rows="3" required
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ product.description }}</textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end space-x-4">
+                    <a href="{{ url_for('view_products') }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html> 
