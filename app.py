@@ -1030,4 +1030,4 @@ def update_payment_status(order_id):
         return {'success': False, 'message': str(e)}, 500
 
 if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0',port=5342) 
+    app.run(debug=False,host='0.0.0.0',port=5345) 
